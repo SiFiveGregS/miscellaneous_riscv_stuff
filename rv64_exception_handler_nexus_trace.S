@@ -6,14 +6,14 @@
 rv64_handler_for_exercising_nexus_trace:
 
     # This handler is intended as a way to capture interrupt/exception entry/return events
-    # in RISC-V Nexus trace.
-
-    # If a timer interrupt happens, this handler, disables further timer interrupts and returns.
+    # in RISC-V Nexus trace.  It's only been tested on RV64, so far, but now it might also operate correctly
+    # on RV32.
+	
+    # If a timer interrupt happens, this handler disables further timer interrupts and returns.
     # Otherwise, this handler silently advances past the faulting instruction and returns.
 
     # Definitely not the kind of behavior that is suitable for a trap handler in a conventional
     # system.
-
 
     # Save a0 in mscratch (clobber old mscratch since we'll be using a0 for something else
     csrw mscratch, a0
@@ -23,14 +23,14 @@ rv64_handler_for_exercising_nexus_trace:
     # restricting our register usage to a0 only)
 
     csrr a0, mcause
-    srli a0, a0, 63
-    xori a0, a0, 0x1
-    bne a0, zero, not_timer_interrupt  // bit 63 is not 1, not an interrupt
+    bge a0, zero, not_timer_interrupt  // sign bit isn't 1, not an interrupt
 
-    csrr a0, mcause
-    andi a0, a0, 0x7FF  // mask off upper bits
+    // mask off upper bit
+    slli a0, a0, 1
+    srli a0, a0, 1
+    // check for residual value of 7 (indicating machine mode timer interrupt)
     xori a0, a0, 0x7
-    bne a0, zero, not_timer_interrupt  //
+    bne a0, zero, not_timer_interrupt
 
     # Must be timer interrupt, lets clear MIE.MTIE
     csrr a0, mie
