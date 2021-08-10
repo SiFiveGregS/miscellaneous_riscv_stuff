@@ -34,7 +34,7 @@ rv64_handler_for_exercising_nexus_trace:
 
     # Must be timer interrupt, lets clear MIE.MTIE
     csrr a0, mie
-    andi a0, a0, 0xFFFFFFFFFFFFFF7F
+    andi a0, a0, -129 // all bits set except bit 7 (portable way of expressing that for both RV32/RV64)
     csrw mie, a0
 
     # restore a0 from mscratch
